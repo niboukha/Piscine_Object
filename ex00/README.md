@@ -128,6 +128,31 @@ ex00/
 └── README.md
 ```
 
+## Architecture (UML Diagram)
+
+```
++------------------+           owns           +------------------+
+|      Bank        |------------------------>|     Account      |
++------------------+     1            *      +------------------+
+| - liquidity      |                          | - id             |
+| - accounts[]     |                          | - value          |
++------------------+                          +------------------+
+| + createAccount()|                          | + get_id()       |
+| + removeAccount()|                          | + get_value()    |
+| + deposit()      |                          |                  |
+| + withdraw()     |                          | (private)        |
+| + giveLoan()     |                          | - add_balance()  |
++------------------+                          | - sub_balance()  |
+                                             +------------------+
+                     <<friend>>
+```
+
+**Key Relationships:**
+- **1 Bank owns * Accounts** - Bank manages a collection of Account objects
+- **friend class** - Bank has exclusive access to Account's private methods
+- **Encapsulation** - Account's internal state is completely protected
+- **Operations** - All Account modifications go through Bank methods only
+
 ## Design Decisions
 
 ### 1. Friend Class Pattern
@@ -164,19 +189,6 @@ Avoided C++11 features to:
 - Follow the exercise constraint
 - Use traditional patterns (iterator loops, pointer management)
 
-## Class Responsibilities
-
-**Account**
-- Stores id and value (balance in cents)
-- Provides read-only access via getters
-- Only Bank can modify balance
-
-**Bank**
-- Manages account collection
-- Enforces business rules (5% fee, unique IDs, loan limits)
-- Controls all money flow
-- Owns and deletes accounts
-
 ## Testing Scenarios
 
 The `main.cpp` demonstrates:
@@ -189,17 +201,4 @@ The `main.cpp` demonstrates:
 - ✅ Account removal with proper cleanup
 - ✅ Displaying account/bank state with formatted currency
 
-## Compiler Output
 
-```
-c++ -Wall -Wextra -Werror -std=c++98 -g -c main.cpp -o objects/main.o
-c++ -Wall -Wextra -Werror -std=c++98 -g -c Account/Account.cpp -o objects/Account/Account.o
-c++ -Wall -Wextra -Werror -std=c++98 -g -c Bank/Bank.cpp -o objects/Bank/Bank.o
-c++ -Wall -Wextra -Werror -std=c++98 -g -o a.out objects/main.o objects/Account/Account.o objects/Bank/Bank.o
-```
-
-Zero warnings, zero errors. ✅
-
-## Key Takeaway
-
-This exercise demonstrates that proper encapsulation and friend classes can enforce complex business logic at compile-time, preventing illogical operations from even being possible, rather than catching them at runtime.
