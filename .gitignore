@@ -1,1 +1,8 @@
 *.o
+a.out
+.DS_Store
+objects/
+a.out
+.DS_Store
+*.swp
+*.swo
