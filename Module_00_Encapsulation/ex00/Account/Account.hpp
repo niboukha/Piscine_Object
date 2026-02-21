@@ -10,8 +10,8 @@ class Account
     public:
         friend std::ostream& operator << (std::ostream& p_os, const Account& p_account);
 
-        int get_id() const;
-        int get_value() const;
+        const int& get_id() const;
+        const int& get_value() const;
 
     private:
         Account(int p_id, int p_value);

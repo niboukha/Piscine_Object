@@ -34,7 +34,7 @@ Bank::~Bank()
     std::cout << "Bank destroyed" << std::endl;
 }
 
-int Bank::get_liquidity() const
+const int& Bank::get_liquidity() const
 {
     return (liquidity);
 }
@@ -62,22 +62,22 @@ bool Bank::isAmountValid(int amount){
     return (amount > 0);
 }
 
-Account *Bank::createAccount(int id, int amount)
+void Bank::createAccount(int id, int amount)
 {
     if (!isAmountValid(amount)) {
         std::cout << "The initial amount must be positive" << std::endl;
-        return (NULL);
+        return;
     }
 
     if (findAccountByID(id) != NULL) {
-        std::cout << "The client account with id : " << id << " already exists" << std::endl;
-        return (NULL);
+        throw std::invalid_argument("Account with ID already exists");
+        // std::cout << "The client account with id : " << id << " already exists" << std::endl;
+        return;
     }
     int fee = computeDepositFee(amount);
     liquidity += fee;
     Account *account = new Account(id, amount - fee);
     set_clientAccount(account);
-    return (account);
 }
 
 void Bank::removeAccount(int id)
@@ -91,14 +91,15 @@ void Bank::removeAccount(int id)
             std::cout << "The client account with id : " << id << " is removed" << std::endl;
         }
     } else {
-        std::cout << "The client account with id : " << id << " is not found" << std::endl;
+        throw std::invalid_argument("Account with ID not found");
+        // std::cout << "The client account with id : " << id << " is not found" << std::endl;
     }
 }
 
 void Bank::depositToAccount(int id, int amount)
 {
     if (!isAmountValid(amount)) {
-        std::cout << "The deposit amount must be positive" << std::endl;
+        throw std::invalid_argument("The deposit amount must be positive");
         return;
     }
 
@@ -109,14 +110,14 @@ void Bank::depositToAccount(int id, int amount)
         account->add_to_balance(amount - fee);
         std::cout << "Deposit of " << format_cents(amount) << " to account with id : " << id << " is successful" << std::endl;
     } else {
-        std::cout << "The client account with id : " << id << " is not found" << std::endl;
+        throw std::invalid_argument("Account with ID not found");
     }
 }
 
 void Bank::withdrawFromAccount(int id, int amount)
 {
     if (!isAmountValid(amount)) {
-        std::cout << "The withdrawal amount must be positive" << std::endl;
+        throw std::invalid_argument("The withdrawal amount must be positive");
         return;
     }
 
@@ -126,17 +127,28 @@ void Bank::withdrawFromAccount(int id, int amount)
             account->subtract_from_balance(amount);
             std::cout << "Withdrawal of " << format_cents(amount) << " from account with id : " << id << " is successful" << std::endl;
         } else {
-            std::cout << "The client account with id : " << id << " has insufficient balance" << std::endl;
+            throw std::invalid_argument("Account has insufficient balance");
         }
     } else {
-        std::cout << "The client account with id : " << id << " is not found" << std::endl;
+        throw std::invalid_argument("Account with ID not found");
     }
+}
+
+void Bank::printAccount(int id, std::ostream& os) const
+{
+    for (std::vector<Account *>::const_iterator it = clientAccounts.begin(); it != clientAccounts.end(); ++it) {
+        if ((*it)->get_id() == id) {
+            os << **it;
+            return;
+        }
+    }
+    throw std::invalid_argument("Account with ID not found");
 }
 
 bool Bank::giveLoan(int accountID, int amount)
 {
     if (!isAmountValid(amount)) {
-        std::cout << "The loan amount must be positive" << std::endl;
+        throw std::invalid_argument("The loan amount must be positive");
         return (false);
     }
 
@@ -148,12 +160,10 @@ bool Bank::giveLoan(int accountID, int amount)
             std::cout << "Loan of " << format_cents(amount) << " to account with id : " << accountID << " is successful" << std::endl;
             return (true);
         } else {
-            std::cout << "The client account with id : " << accountID << " is not found" << std::endl;
-            return (false);
+            throw std::invalid_argument("Account with ID not found");
         }
     } else {
-        std::cout << "The bank has insufficient liquidity" << std::endl;
-        return (false);
+        throw std::invalid_argument("The bank has insufficient liquidity");
     }
 }
 

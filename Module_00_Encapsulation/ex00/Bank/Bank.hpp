@@ -16,17 +16,18 @@ class Bank
 
         ~Bank();
 
-        int get_liquidity() const;
+        const int& get_liquidity() const;
 
         //bank operations
-        Account *createAccount(int id, int amount);
+        void createAccount(int id, int amount);
         void removeAccount(int id);
         void depositToAccount(int id, int amount);
         void withdrawFromAccount(int id, int amount);
         
         //loan operation
         bool giveLoan(int accountID, int amount);
-
+        
+        void printAccount(int id, std::ostream& os) const;
         friend std::ostream& operator << (std::ostream& p_os, const Bank& p_bank);
 
     private:

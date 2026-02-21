@@ -25,12 +25,12 @@ Account::~Account()
     std::cout << "Account with id : " << id << " and value : " << format_cents(value) << " is destroyed" << std::endl;
 }
 
-int Account::get_id() const
+const int& Account::get_id() const
 {
     return (id);
 }
 
-int Account::get_value() const
+const int& Account::get_value() const
 {
     return (value);
 }

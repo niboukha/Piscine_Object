@@ -2,59 +2,90 @@
 
 ## Overview
 
-This exercise implements a properly encapsulated banking system with two classes: `Bank` and `Account`. The goal is to enforce logical constraints through object-oriented design, preventing unauthorized or illogical operations.
+This exercise implements a simple banking system with two classes, `Bank` and `Account`, focused on encapsulation and controlled money flows.
 
-## Requirements Met
+The goal is to show that rules are enforced by design, not by user discipline: the bank owns the money flow, the account never exposes its internals, and every mutation goes through a single trusted interface.
 
-✅ **Encapsulation**
-- Account attributes are private with no direct public setters
-- All money operations flow through the Bank class
-- Used `friend class Bank` to grant controlled access to private Account methods
+## Requirements Checklist (and where they are enforced)
 
-✅ **5% Bank Fee**
-- Bank receives 5% of all money inflows on client accounts
-- Fee applied on:
-  - Account creation (initial deposit)
-  - Account deposits via `depositToAccount()`
-- Uses integer arithmetic (cents) for accurate calculations without floating-point errors
+✅ **The bank must receive 5% of each money inflow**
+- Applied in `createAccount()` and `depositToAccount()` using `amount * 5 / 100`.
 
-✅ **Unique Account IDs**
-- `createAccount()` checks for duplicate IDs and rejects duplicates
-- Each account has a unique identifier
+✅ **Accounts must never have two identical IDs**
+- `createAccount()` calls `findAccountByID()` and throws on duplicates.
 
-✅ **Money Flow Control**
-- Impossible to add/modify account balance directly
-- All operations go through Bank methods:
-  - `createAccount(id, amount)` - Creates account with fee deducted
-  - `depositToAccount(id, amount)` - Deposits with 5% fee to bank
-  - `withdrawFromAccount(id, amount)` - Withdraws from account
-  - `giveLoan(id, amount)` - Loan within bank's liquidity limits
+✅ **Attributes must not be modifiable from the outside**
+- `Account::id` and `Account::value` are private.
+- Mutators (`add_to_balance`, `subtract_from_balance`) are private.
+- `Bank::liquidity` and `clientAccounts` are private.
 
-✅ **Loan Restrictions**
-- Bank only grants loans within available liquidity
-- Returns `false` if insufficient funds
+✅ **The bank can create, delete, and modify accounts**
+- `createAccount()`, `removeAccount()`, `depositToAccount()`, `withdrawFromAccount()`.
 
-✅ **Getters**
-- Public const getters: `get_id()`, `get_value()` (return by value for primitives)
-- Public const getter: `get_liquidity()` (Account/Bank read-only access)
-- `get_clientAccounts()` returns const reference (no copy)
+✅ **The bank can give a loan within its funds**
+- `giveLoan()` checks `liquidity >= amount` before crediting.
 
-✅ **C++98 Compliance**
-- No C++11 features (no lambdas, no `auto`, no range-based for loops)
-- Uses `NULL` instead of `nullptr`
-- Compiled with `-std=c++98 -Wall -Wextra -Werror`
-- Uses STL containers (`std::vector`)
+✅ **It must be impossible to add money without the bank**
+- `Account` balance changes are private and only `Bank` is a friend.
 
-✅ **Memory Management**
-- Bank owns Account objects (created with `new`)
-- Bank destructor properly deletes all accounts
-- `removeAccount()` deletes account before removal from vector
-- No memory leaks
+✅ **Getters/Setters when they make sense**
+- Read-only getters exist: `Account::get_id()`, `Account::get_value()`, `Bank::get_liquidity()`.
+- No public setters: external code cannot modify values directly.
+- Getters return by `const int&`, not by copy.
 
-✅ **Monetary Values**
-- All amounts stored as cents (integers) for precision
-- Formatted output as `$xx.yy` (e.g., `$100.50`)
-- 5% fee calculation: `amount * 5 / 100` (exact integer arithmetic)
+✅ **Const getters where it makes sense**
+- All getters are `const` and return `const int&`.
+
+✅ **Read-Only Account Access (Optional, Encapsulation-Safe)**
+- `printAccount(id, std::ostream&)` outputs a single account using `operator<<`
+- Does not expose `Account*` or allow modifications
+
+✅ **Each choice can be defended**
+- See Design Decisions below.
+
+## Interaction Flow (What actually happens)
+
+### 1) Account Creation
+```
+main: bank.createAccount(0, 10000)
+    ↓
+Bank: validate amount (> 0)
+Bank: ensure ID is unique (findAccountByID)
+Bank: compute fee = amount * 5 / 100
+Bank: liquidity += fee
+Bank: Account(id, amount - fee)
+Bank: store pointer in clientAccounts
+```
+
+### 2) Deposit (also a money inflow)
+```
+main: bank.depositToAccount(0, 10000)
+    ↓
+Bank: validate amount (> 0)
+Bank: find account
+Bank: compute fee = amount * 5 / 100
+Bank: liquidity += fee
+Bank: account.add_to_balance(amount - fee)
+```
+
+### 3) Loan
+```
+main: bank.giveLoan(0, 200)
+    ↓
+Bank: validate amount (> 0)
+Bank: check liquidity >= amount
+Bank: account.add_to_balance(amount)
+Bank: liquidity -= amount
+```
+
+### 4) Read-Only Account Output
+```
+main: bank.printAccount(0, std::cout)
+    ↓
+Bank: find account internally
+    ↓
+Bank: stream Account using operator<< (read-only)
+```
 
 ## Building
 
@@ -81,36 +112,45 @@ Bank created with liquidity : $1000.00
 === Creating Accounts ===
 Account created with id : 0 and value : $95.00
 Account created with id : 1 and value : $16.15
-The client account with id : 0 already exists
+Expected error for duplicate: Account with ID already exists
 
 === Deposit Money (5% fee to bank) ===
+Balance of account with id : 0 increased from $95.00 to $190.00
 Deposit of $100.00 to account with id : 0 is successful
-Bank liquidity after deposit: $1009.95
+Bank liquidity after deposit: $1010.85
 
 === Withdraw Money ===
-Withdrawal of $50.00 from account with id : 1 is successful
+Balance of account with id : 1 decreased from $16.15 to $15.65
+Withdrawal of $0.50 from account with id : 1 is successful
+Error withdrawing from Account B: Account has insufficient balance
 
 === Give Loan ===
-Loan of $200.00 to account with id : 0 is successful
-Bank liquidity after loan: $809.95
+Balance of account with id : 0 increased from $190.00 to $192.00
+Loan of $2.00 to account with id : 0 is successful
+Error giving loan: The bank has insufficient liquidity
 
 === Final State ===
-Account A: [0] - [$295.00]
-Account B: [1] - [$19.15]
+Account A: [0] - [$192.00]
+Account B: [1] - [$15.65]
 
 Bank:
 Bank informations : 
-Liquidity : $809.95
-[0] - [$295.00]
-[1] - [$19.15]
+Liquidity : $1008.85
+[0] - [$192.00]
+[1] - [$15.65]
 
 === Remove Account ===
 The client account with id : 1 is removed
+Account with id : 1 and value : $15.65 is destroyed
+Error removing Account B: Account with ID not found
 
 === Final Bank State ===
 Bank informations : 
-Liquidity : $809.95
-[0] - [$295.00]
+Liquidity : $1008.85
+[0] - [$192.00]
+
+Account with id : 0 and value : $192.00 is destroyed
+Bank destroyed
 ```
 
 ## File Structure
@@ -141,9 +181,9 @@ ex00/
 | + removeAccount()|                          | + get_value()    |
 | + deposit()      |                          |                  |
 | + withdraw()     |                          | (private)        |
-| + giveLoan()     |                          | - add_balance()  |
-+------------------+                          | - sub_balance()  |
-                                             +------------------+
+| + printAccount() |                          | - add_balance()  |
+| + giveLoan()     |                          | - sub_balance()  |
++------------------+                          +------------------+
                      <<friend>>
 ```
 
@@ -181,13 +221,37 @@ Made `get_id()` and `get_value()` public to:
 - Allow external code to read account information
 - Maintain read-only access (no modification possible)
 - Enable the `operator<<` overload for printing
-- Comply with "Getter creation is mandatory if it makes sense"
+- Comply with the getter requirement without exposing setters
 
 ### 5. C++98 Strict Compliance
 Avoided C++11 features to:
 - Support legacy systems
 - Follow the exercise constraint
 - Use traditional patterns (iterator loops, pointer management)
+
+## Encapsulation Review (ex00)
+
+- `Account` fields and mutators are private; only `Bank` can change balances via friendship.
+- `Bank` owns and deletes accounts, so external code cannot create or destroy them.
+- `createAccount()` does not return an `Account*`, so external code never gets a direct handle.
+- All balance changes flow through `Bank` methods, satisfying the "no direct money changes" rule.
+
+## Q and A (Defense Ready)
+
+**Q: Why does `createAccount()` return void?**
+A: It prevents external code from holding an `Account*`, which keeps ownership and mutation strictly inside `Bank`.
+
+**Q: How do I print a single account now?**
+A: Use `printAccount(id, std::ostream&)`, which streams the account via `operator<<` without exposing the object.
+
+**Q: Why use a friend class instead of public setters?**
+A: Friendship makes `Bank` the only class allowed to mutate account state, enforcing a single point of control for validation, fees, and loan limits.
+
+**Q: Why are getters returning `const int&`?**
+A: The requirement forbids getters by copy when they make sense. Returning a const reference provides read-only access without copies.
+
+**Q: Why store money as integer cents?**
+A: It avoids floating-point precision bugs and keeps fee calculations exact.
 
 ## Testing Scenarios
 

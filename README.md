@@ -1,6 +1,6 @@
 # Piscine Object - Advanced Object-Oriented Programming
 
-A comprehensive 42 School specialization covering object-oriented design principles, from encapsulation to design patterns.
+A 42 School specialization covering object-oriented design principles, from encapsulation to design patterns.
 
 ## Overview
 
@@ -16,20 +16,21 @@ This course progresses through six modules, each building on the previous one, t
 ## Project Structure
 
 ```
-Piscine_Object/
+encapsulation/
 ├── Module_00_Encapsulation/
-│   ├── ex00/                 ✅ Bank system with encapsulation
+│   ├── ex00/                  ✅ Bank system with strict encapsulation
 │   │   ├── Account/
 │   │   ├── Bank/
 │   │   ├── main.cpp
 │   │   ├── Makefile
 │   │   └── README.md
-│   └── ex01/                 ⏳ Relationships exercise
-├── Module_01_Relationships/  (Coming soon)
-├── Module_02_UML/           (Coming soon)
-├── Module_03_SOLID/         (Coming soon)
-├── Module_04_DesignPatterns/(Coming soon)
-├── Module_05_Practical/     (Coming soon)
+│   ├── ex00_bonus/            ✅ Advanced bonus requirements
+│   │   ├── Account/
+│   │   ├── Bank/
+│   │   ├── main.cpp
+│   │   ├── Makefile
+│   │   └── README_BONUS.md
+│   └── ex01/                  ⏳ Relationships exercise
 ├── .gitignore
 └── README.md
 ```
@@ -42,11 +43,20 @@ Implement a properly encapsulated banking system demonstrating:
 - Validation and business logic enforcement
 - Proper memory management and cleanup
 
-📖 **[Full Module Documentation](Module_00_Encapsulation/ex00/README.md)**
+📖 **[Exercise Documentation](Module_00_Encapsulation/ex00/README.md)**
+📖 **[Bonus Documentation](Module_00_Encapsulation/ex00_bonus/README_BONUS.md)**
 
-**Build & Run:**
+**Build & Run (ex00):**
 ```bash
 cd Module_00_Encapsulation/ex00/
+make              # Compile
+./a.out          # Run
+make fclean      # Clean
+```
+
+**Build & Run (ex00_bonus):**
+```bash
+cd Module_00_Encapsulation/ex00_bonus/
 make              # Compile
 ./a.out          # Run
 make fclean      # Clean
@@ -87,7 +97,7 @@ Put it all together:
 ## Getting Started
 
 ```bash
-# Navigate to current module
+# Navigate to an exercise
 cd Module_00_Encapsulation/ex00/
 
 # Build
